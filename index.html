@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIFRA IT — Agente Comercial IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#050a12;--surface:#0c1420;--surface2:#111d2e;--border:#1a2f47;
+    --accent:#0ea5e9;--accent2:#38bdf8;--accent-glow:rgba(14,165,233,0.25);
+    --text:#e2eaf4;--text-dim:#5a7a99;--text-mid:#94afc8;
+    --red:#ef4444;--green:#22c55e;--warn:#f59e0b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(14,165,233,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(14,165,233,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  body::after{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:700px;height:700px;background:radial-gradient(circle,rgba(14,165,233,0.12) 0%,transparent 70%);pointer-events:none;z-index:0}
+  .wrapper{position:relative;z-index:1;width:100%;max-width:860px;padding:40px 24px 80px;display:flex;flex-direction:column;align-items:center;gap:32px}
+  header{width:100%;display:flex;align-items:center;justify-content:space-between;padding-bottom:24px;border-bottom:1px solid var(--border)}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),#0369a1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:-1px;color:#fff;box-shadow:0 0 20px var(--accent-glow)}
+  .logo-text{font-size:15px;font-weight:600;letter-spacing:.02em}
+  .logo-sub{font-size:11px;color:var(--text-dim);font-weight:300;letter-spacing:.08em;text-transform:uppercase}
+  .badge{font-family:'Space Mono',monospace;font-size:10px;padding:4px 10px;border-radius:20px;background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.3);color:var(--accent2);letter-spacing:.1em}
+  .hero{text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .hero h1{font-size:clamp(26px,5vw,40px);font-weight:700;line-height:1.15;letter-spacing:-.02em}
+  .hero h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .hero p{font-size:15px;color:var(--text-mid);max-width:460px;line-height:1.65;font-weight:300}
+
+  /* SETUP */
+  #setup-panel{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px 28px;flex-direction:column;gap:16px;display:none}
+  #setup-panel.visible{display:flex}
+  .setup-title{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);display:flex;align-items:center;gap:8px}
+  .setup-title::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--warn);box-shadow:0 0 8px var(--warn)}
+  .key-row{display:flex;gap:10px}
+  .key-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-family:'Space Mono',monospace;font-size:13px;color:var(--text);outline:none;transition:border-color .2s;letter-spacing:.05em}
+  .key-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+  .key-input::placeholder{color:var(--text-dim)}
+  .btn-save{padding:12px 20px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+  .btn-save:hover{background:var(--accent2);transform:translateY(-1px)}
+  .setup-hint{font-size:12px;color:var(--text-dim);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .setup-hint a{color:var(--accent);text-decoration:none}
+
+  /* MAIN CARD */
+  #main-card{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;display:none}
+  #main-card.visible{display:block}
+  .status-bar{background:var(--surface2);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between}
+  .status-indicator{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.05em}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim);transition:all .3s}
+  .dot.connecting{background:var(--warn);box-shadow:0 0 8px var(--warn);animation:pulse 1s infinite}
+  .dot.live{background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse 2s infinite}
+  .dot.speaking{background:var(--accent);box-shadow:0 0 10px var(--accent);animation:pulse .5s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .status-text{color:var(--text-mid);font-size:12px}
+  .model-tag{font-family:'Space Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:.08em}
+  .visualizer-area{padding:40px 24px 32px;display:flex;flex-direction:column;align-items:center;gap:28px}
+  .orb-container{position:relative;width:140px;height:140px;display:flex;align-items:center;justify-content:center}
+  .orb-ring{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(14,165,233,.15)}
+  .orb-ring.r2{inset:-14px;border-color:rgba(14,165,233,.08)}
+  .orb-ring.r3{inset:-28px;border-color:rgba(14,165,233,.04)}
+  .orb-active .orb-ring{animation:ringPulse 1.5s ease-in-out infinite}
+  .orb-active .orb-ring.r2{animation-delay:.3s}
+  .orb-active .orb-ring.r3{animation-delay:.6s}
+  @keyframes ringPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.06);opacity:.5}}
+  .orb{width:100px;height:100px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#1a3a5c,#050a12);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+  .orb::before{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(14,165,233,.15),transparent 60%);opacity:0;transition:opacity .3s}
+  .orb:hover::before,.orb.active::before{opacity:1}
+  .orb.active{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow),0 0 40px var(--accent-glow)}
+  .orb svg{width:36px;height:36px;transition:all .3s}
+  .orb.active svg{filter:drop-shadow(0 0 8px var(--accent))}
+  .waveform{display:flex;align-items:center;gap:3px;height:32px}
+  .bar{width:3px;height:4px;background:var(--accent);border-radius:2px;opacity:.3}
+  .bar.active{opacity:1;animation:wave .8s ease-in-out infinite}
+  .bar:nth-child(1){animation-delay:.00s}.bar:nth-child(2){animation-delay:.08s}.bar:nth-child(3){animation-delay:.16s}
+  .bar:nth-child(4){animation-delay:.24s}.bar:nth-child(5){animation-delay:.32s}.bar:nth-child(6){animation-delay:.24s}
+  .bar:nth-child(7){animation-delay:.16s}.bar:nth-child(8){animation-delay:.08s}.bar:nth-child(9){animation-delay:.00s}
+  .bar:nth-child(10){animation-delay:.08s}.bar:nth-child(11){animation-delay:.16s}.bar:nth-child(12){animation-delay:.24s}
+  .bar:nth-child(13){animation-delay:.32s}.bar:nth-child(14){animation-delay:.24s}.bar:nth-child(15){animation-delay:.16s}
+  @keyframes wave{0%,100%{height:4px}50%{height:24px}}
+  .transcript-area{padding:0 24px 24px;display:flex;flex-direction:column;gap:12px}
+  .transcript-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)}
+  .transcript-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;min-height:100px;max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+  .transcript-box::-webkit-scrollbar{width:4px}
+  .transcript-box::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .msg{display:flex;flex-direction:column;gap:2px;animation:fadeIn .3s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .msg-who{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+  .msg-who.user{color:var(--text-dim)}.msg-who.agent{color:var(--accent)}
+  .msg-text{font-size:13.5px;line-height:1.6;color:var(--text-mid);font-weight:300}
+  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:80px;gap:8px;color:var(--text-dim);font-size:13px;font-weight:300}
+  .controls{padding:20px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:center}
+  .btn-main{padding:14px 32px;border:none;border-radius:12px;font-family:'Sora',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px}
+  .btn-connect{background:linear-gradient(135deg,var(--accent),#0369a1);color:#fff;box-shadow:0 4px 24px rgba(14,165,233,.3)}
+  .btn-connect:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(14,165,233,.4)}
+  .btn-disconnect{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+  .btn-disconnect:hover{background:rgba(239,68,68,.2);transform:translateY(-1px)}
+  .btn-clear{padding:14px 20px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;font-family:'Sora',sans-serif;font-size:13px;color:var(--text-dim);cursor:pointer;transition:all .2s}
+  .btn-clear:hover{color:var(--text);border-color:var(--text-dim)}
+  .change-key{font-size:11px;color:var(--text-dim);text-align:center;cursor:pointer;text-decoration:underline;text-underline-offset:3px;transition:color .2s;padding:0 24px 20px;display:block}
+  .change-key:hover{color:var(--accent)}
+  .features{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .feature{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px}
+  .feature-icon{font-size:18px}.feature-title{font-size:12px;font-weight:600;color:var(--text)}
+  .feature-desc{font-size:11px;color:var(--text-dim);line-height:1.5;font-weight:300}
+  #toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;color:var(--text-mid);transform:translateY(80px);opacity:0;transition:all .3s;z-index:100;max-width:340px}
+  #toast.show{transform:translateY(0);opacity:1}
+  #toast.error{border-color:rgba(239,68,68,.4);color:var(--red)}
+  #toast.success{border-color:rgba(34,197,94,.4);color:var(--green)}
+  @media(max-width:600px){.features{grid-template-columns:1fr}.key-row{flex-direction:column}header{flex-wrap:wrap;gap:10px}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">CI</div>
+      <div>
+        <div class="logo-text">CIFRA IT</div>
+        <div class="logo-sub">Agente Comercial IA</div>
+      </div>
+    </div>
+    <div class="badge">GEMINI 3.1 FLASH LIVE</div>
+  </header>
+
+  <div class="hero">
+    <h1>Tu asistente comercial<br><span>siempre disponible</span></h1>
+    <p>Habla directamente con nuestro agente de inteligencia artificial. Responde en tiempo real, conoce nuestros servicios y resuelve tus dudas al instante.</p>
+  </div>
+
+  <!-- SETUP PANEL: visible por defecto via JS -->
+  <div id="setup-panel">
+    <div class="setup-title">Configuración — API Key de Google</div>
+    <div class="key-row">
+      <input type="password" id="api-key-input" class="key-input" placeholder="AIzaSy..." autocomplete="off" spellcheck="false"/>
+      <button class="btn-save" onclick="saveKey()">Guardar →</button>
+    </div>
+    <div class="setup-hint">
+      🔑 Obtén tu API key gratis en <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>
+      &nbsp;— Se guarda en este navegador y dominio.
+    </div>
+  </div>
+
+  <!-- MAIN CARD: oculto hasta tener key -->
+  <div id="main-card">
+    <div class="status-bar">
+      <div class="status-indicator">
+        <div class="dot" id="status-dot"></div>
+        <span id="status-text" class="status-text">Desconectado</span>
+      </div>
+      <div class="model-tag" id="model-tag">gemini-3.1-flash-live-preview</div>
+    </div>
+    <div class="visualizer-area">
+      <div class="orb-container" id="orb-container">
+        <div class="orb-ring"></div><div class="orb-ring r2"></div><div class="orb-ring r3"></div>
+        <div class="orb" id="orb">
+          <svg viewBox="0 0 24 24" fill="none">
+            <rect x="9" y="2" width="6" height="12" rx="3" fill="var(--accent)" opacity=".9"/>
+            <path d="M5 10C5 14.418 8.134 18 12 18C15.866 18 19 14.418 19 10" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="12" y1="18" x2="12" y2="22" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="9" y1="22" x2="15" y2="22" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+      <div class="waveform">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      </div>
+    </div>
+    <div class="transcript-area">
+      <div class="transcript-label">Transcripción en vivo</div>
+      <div class="transcript-box" id="transcript">
+        <div class="empty-state" id="empty-state"><span>💬</span><span>La conversación aparecerá aquí...</span></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn-main btn-connect" id="btn-connect" onclick="connect()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="3" fill="white"/>
+          <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Iniciar sesión
+      </button>
+      <button class="btn-main btn-disconnect" id="btn-disconnect" style="display:none" onclick="disconnect()">✕ Finalizar</button>
+      <button class="btn-clear" onclick="clearTranscript()">Limpiar</button>
+    </div>
+    <span class="change-key" onclick="changeKey()">Cambiar API Key</span>
+  </div>
+
+  <div class="features">
+    <div class="feature"><div class="feature-icon">⚡</div><div class="feature-title">Baja latencia</div><div class="feature-desc">Respuestas en tiempo real con streaming de audio bidireccional</div></div>
+    <div class="feature"><div class="feature-icon">🎙️</div><div class="feature-title">Barge-in</div><div class="feature-desc">Interrumpe al agente en cualquier momento, como en una llamada real</div></div>
+    <div class="feature"><div class="feature-icon">🧠</div><div class="feature-title">Contexto completo</div><div class="feature-desc">El agente recuerda toda la conversación y adapta su tono</div></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// CONFIG — modelos en orden de preferencia
+// ═══════════════════════════════════════
+const MODELS = [
+  'gemini-3.1-flash-live-preview',   // más nuevo
+  'gemini-2.0-flash-live-001'        // fallback si el anterior falla
+];
+const WS_BASE = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent';
+// ✅ Usar localStorage (persiste entre recargas y pestañas del mismo dominio)
+const STORAGE_KEY = 'cifra_gemini_key_v2';
+
+const SYSTEM_PROMPT = `Eres el agente comercial virtual de CIFRA IT SAS, empresa colombiana de tecnología e innovación con sede en Bogotá (Calle 85 # 16a-20, Of. 401). Correo: comercial@cifra.com.co. WhatsApp: +57 315 160 5539.
+
+Tu misión es atender prospectos y clientes en español colombiano natural. Usa frases cortas y fluidas, propias de una conversación de voz. Nunca uses listas con viñetas ni formatos de texto.
+
+QUIÉNES SOMOS
+CIFRA IT SAS es un aliado tecnológico especializado en soluciones inteligentes y optimización de procesos. Acompañamos a las empresas en su transformación digital con tecnología avanzada. Cumplimos estándares ISO 27001. Toda nuestra infraestructura corre sobre Microsoft Azure.
+
+PORTAFOLIO DE SOLUCIONES
+
+1. CIFRA CRM — El cerebro de tu operación comercial
+Plataforma CRM inteligente para centralizar, automatizar y escalar la gestión comercial. Potenciada por Microsoft Azure y Meta IA.
+Funcionalidades: Gestión Multi-Línea con flujos independientes por unidad de negocio. Pipeline de oportunidades con visibilidad en tiempo real. Campañas inteligentes automatizadas con IA. Gestión de tareas con calendario y notificaciones automáticas. Intranet corporativa con repositorio de documentos. Integraciones con Meta Business Suite y formularios web. Personalización total de branding y procesos. Seguridad con 2FA, roles y cifrado en Azure.
+Casos reales: BPO financiero logró 40% más conversión. Casa de cobranza redujo 30% los tiempos de recuperación. Empresas de servicios unificaron ventas y postventa.
+Implementación en una semana. Soporte lunes a sábado. Precios por suscripción flexible.
+
+2. AGENTES IA — Voz y Chat
+Agentes multicanal listos para: Cobranza Automatizada, IVR en Salud, Créditos Inteligentes, Gestión de PQR, Seguros, Encuestas, Información Corporativa, Información de Proyectos, Recordatorios de Beneficios.
+
+3. AUTOMATIZACIÓN — RPA con n8n y otras herramientas
+Reducimos tareas manuales y escalamos operaciones con flujos automatizados precisos y rápidos.
+
+4. GESTIÓN IT
+Microsoft 365, Azure, redes, VPS, Docker, DevOps, Entra ID. Soporte N1/N2/N3 con SLAs P1 a P4.
+
+5. GESTIÓN DE CAMPAÑAS
+Campañas con agentes IA para BPO, cobranza, salud, seguros y servicios.
+
+6. CIFRA 360 — Próximamente
+Ecosistema completo integrado de todas las soluciones.
+
+METODOLOGÍA: Diagnóstico → Diseño → Implementación → Soporte continuo.
+
+INSTRUCCIONES: Sé amigable y profesional. Frases cortas para voz. Para precios: cotización personalizada gratuita. Para agendar: WhatsApp +57 315 160 5539 o comercial@cifra.com.co. Al iniciar saluda brevemente y pregunta en qué puedes ayudar.`;
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let ws=null, audioCtx=null, mediaStream=null, processor=null;
+let apiKey='', isConnected=false, currentModelIdx=0;
+let userTranscript='', agentTranscript='', nextPlayTime=0;
+
+// ═══════════════════════════════════════
+// INIT — leer key de localStorage
+// ═══════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved && saved.startsWith('AIza')) {
+    apiKey = saved;
+    document.getElementById('api-key-input').value = saved;
+    showCard();
+  } else {
+    showSetup();
+  }
+  document.getElementById('api-key-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') saveKey();
+  });
+});
+
+function showSetup() {
+  document.getElementById('setup-panel').classList.add('visible');
+  document.getElementById('main-card').classList.remove('visible');
+}
+function showCard() {
+  document.getElementById('setup-panel').classList.remove('visible');
+  document.getElementById('main-card').classList.add('visible');
+}
+
+// ═══════════════════════════════════════
+// API KEY — localStorage persiste
+// ═══════════════════════════════════════
+function saveKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val || !val.startsWith('AIza')) {
+    toast('La API key parece inválida. Debe comenzar con "AIza"', 'error');
+    return;
+  }
+  apiKey = val;
+  localStorage.setItem(STORAGE_KEY, val);
+  showCard();
+  toast('API Key guardada ✓', 'success');
+}
+
+function changeKey() {
+  disconnect();
+  localStorage.removeItem(STORAGE_KEY);
+  apiKey = '';
+  document.getElementById('api-key-input').value = '';
+  showSetup();
+}
+
+// ═══════════════════════════════════════
+// UI helpers
+// ═══════════════════════════════════════
+function setStatus(state, label) {
+  document.getElementById('status-dot').className = 'dot ' + state;
+  document.getElementById('status-text').textContent = label;
+}
+function setWave(on) { document.querySelectorAll('.bar').forEach(b => b.classList.toggle('active', on)); }
+function setOrb(on) {
+  document.getElementById('orb').classList.toggle('active', on);
+  document.getElementById('orb-container').classList.toggle('orb-active', on);
+}
+function addMessage(who, text) {
+  if (!text.trim()) return;
+  const box = document.getElementById('transcript');
+  document.getElementById('empty-state')?.remove();
+  const msg = document.createElement('div');
+  msg.className = 'msg';
+  msg.innerHTML = `<div class="msg-who ${who}">${who==='user'?'👤 Tú':'🤖 Agente CIFRA'}</div><div class="msg-text">${text}</div>`;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+}
+function clearTranscript() {
+  document.getElementById('transcript').innerHTML =
+    '<div class="empty-state" id="empty-state"><span>💬</span><span>La conversación aparecerá aquí...</span></div>';
+}
+
+// ═══════════════════════════════════════
+// AUDIO — PCM 24kHz
+// ═══════════════════════════════════════
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)({sampleRate:24000});
+  if (audioCtx.state==='suspended') audioCtx.resume();
+}
+function playPCM(b64) {
+  initAudio();
+  const raw=atob(b64), bytes=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++) bytes[i]=raw.charCodeAt(i);
+  const samples=bytes.length/2, f32=new Float32Array(samples), view=new DataView(bytes.buffer);
+  for(let i=0;i<samples;i++) f32[i]=view.getInt16(i*2,true)/32768;
+  const buf=audioCtx.createBuffer(1,samples,24000);
+  buf.copyToChannel(f32,0);
+  const src=audioCtx.createBufferSource();
+  src.buffer=buf; src.connect(audioCtx.destination);
+  const startAt=Math.max(audioCtx.currentTime,nextPlayTime);
+  src.start(startAt); nextPlayTime=startAt+buf.duration;
+  setWave(true); setOrb(true); setStatus('speaking','Agente hablando...');
+  src.onended=()=>{
+    setTimeout(()=>{ if(audioCtx.currentTime>=nextPlayTime-0.05){setWave(false);setOrb(false);setStatus('live','Escuchando...');} },200);
+  };
+}
+
+// ═══════════════════════════════════════
+// MICRÓFONO — PCM 16-bit 16kHz
+// ═══════════════════════════════════════
+async function startMic() {
+  mediaStream=await navigator.mediaDevices.getUserMedia({audio:true});
+  initAudio();
+  const micCtx=new AudioContext({sampleRate:16000});
+  const src=micCtx.createMediaStreamSource(mediaStream);
+  processor=micCtx.createScriptProcessor(4096,1,1);
+  src.connect(processor); processor.connect(micCtx.destination);
+  processor.onaudioprocess=(e)=>{
+    if(!ws||ws.readyState!==WebSocket.OPEN) return;
+    const inp=e.inputBuffer.getChannelData(0), pcm=new Int16Array(inp.length);
+    for(let i=0;i<inp.length;i++) pcm[i]=Math.max(-32768,Math.min(32767,Math.round(inp[i]*32767)));
+    const b64=btoa(String.fromCharCode(...new Uint8Array(pcm.buffer)));
+    ws.send(JSON.stringify({realtimeInput:{audio:{data:b64,mimeType:'audio/pcm;rate=16000'}}}));
+  };
+}
+function stopMic() {
+  if(processor){processor.disconnect();processor=null;}
+  if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;}
+}
+
+// ═══════════════════════════════════════
+// WEBSOCKET — con fallback de modelo
+// ═══════════════════════════════════════
+async function connect() {
+  if(!apiKey){toast('Primero guarda tu API Key','error');return;}
+  const model = MODELS[currentModelIdx];
+  document.getElementById('model-tag').textContent = model;
+  setStatus('connecting','Conectando...');
+  document.getElementById('btn-connect').style.display='none';
+
+  try {
+    ws=new WebSocket(`${WS_BASE}?key=${apiKey}`);
+
+    ws.onopen=()=>{
+      ws.send(JSON.stringify({
+        setup:{
+          model:`models/${model}`,
+          generationConfig:{
+            responseModalities:['AUDIO'],
+            speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:'Charon'}}}
+          },
+          systemInstruction:{parts:[{text:SYSTEM_PROMPT}]},
+          inputAudioTranscription:{},
+          outputAudioTranscription:{}
+        }
+      }));
+    };
+
+    ws.onmessage=(event)=>{
+      let data; try{data=JSON.parse(event.data);}catch{return;}
+
+      if(data.setupComplete){
+        isConnected=true;
+        setStatus('live','Escuchando...');
+        document.getElementById('btn-disconnect').style.display='flex';
+        setOrb(true);
+        startMic().catch(err=>{toast('Error micrófono: '+err.message,'error');disconnect();});
+        return;
+      }
+      if(data.serverContent){
+        const sc=data.serverContent;
+        if(sc.modelTurn?.parts){
+          for(const p of sc.modelTurn.parts){
+            if(p.inlineData?.mimeType?.startsWith('audio/')) playPCM(p.inlineData.data);
+          }
+        }
+        if(sc.inputTranscription?.text)  userTranscript  +=sc.inputTranscription.text;
+        if(sc.outputTranscription?.text) agentTranscript +=sc.outputTranscription.text;
+        if(sc.turnComplete){
+          if(userTranscript.trim()) {addMessage('user', userTranscript.trim()); userTranscript='';}
+          if(agentTranscript.trim()){addMessage('agent',agentTranscript.trim());agentTranscript='';}
+        }
+      }
+      if(data.error){
+        const msg=data.error.message||JSON.stringify(data.error);
+        handleError(msg);
+      }
+    };
+
+    ws.onerror=()=>{ /* onclose se encarga */ };
+
+    ws.onclose=(e)=>{
+      const reason=(e.reason||'').toLowerCase();
+      if(e.code===1007 && reason.includes('api key')){
+        // Key inválida → volver a setup
+        toast('API Key inválida. Ingresa una key válida.','error');
+        localStorage.removeItem(STORAGE_KEY);
+        apiKey='';
+        cleanup();
+        setTimeout(()=>showSetup(),1000);
+      } else if(e.code===1008 || (reason.includes('quota') || reason.includes('permission') || reason.includes('not found'))){
+        // Modelo no disponible → intentar fallback
+        if(currentModelIdx < MODELS.length-1){
+          currentModelIdx++;
+          toast(`Modelo no disponible. Intentando con ${MODELS[currentModelIdx]}...`,'');
+          cleanup();
+          setTimeout(()=>connect(),1500);
+        } else {
+          toast(`Error: ${e.reason||'Modelo no disponible en tier gratuito'}. Activa billing en Google Cloud.`,'error');
+          cleanup();
+        }
+      } else if(isConnected){
+        cleanup();
+      } else {
+        toast(`Error de conexión (${e.code}): ${e.reason||'Sin respuesta del servidor'}`, 'error');
+        cleanup();
+      }
+    };
+
+  } catch(err){
+    toast('No se pudo conectar: '+err.message,'error');
+    cleanup();
+  }
+}
+
+function handleError(msg){
+  if(msg.toLowerCase().includes('api key')){
+    toast('API Key inválida.','error');
+    localStorage.removeItem(STORAGE_KEY);
+    cleanup(); setTimeout(()=>showSetup(),1000);
+  } else {
+    toast('Error: '+msg,'error');
+    cleanup();
+  }
+}
+
+function disconnect(){if(ws){ws.close();ws=null;}cleanup();}
+function cleanup(){
+  stopMic(); isConnected=false; nextPlayTime=0;
+  userTranscript=''; agentTranscript='';
+  setStatus('','Desconectado'); setWave(false); setOrb(false);
+  document.getElementById('btn-connect').style.display='flex';
+  document.getElementById('btn-disconnect').style.display='none';
+}
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+let toastTimer=null;
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='show '+type;
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{t.className='';},5000);
+}
+</script>
+</body>
+</html>
