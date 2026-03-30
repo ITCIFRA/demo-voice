@@ -205,7 +205,8 @@ const MODELS = [
   'gemini-3.1-flash-live-preview',   // más nuevo
   'gemini-2.0-flash-live-001'        // fallback si el anterior falla
 ];
-const WS_BASE = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent';
+// LÍNEA CORREGIDA
+const WS_BASE = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent';
 // ✅ Usar localStorage (persiste entre recargas y pestañas del mismo dominio)
 const STORAGE_KEY = 'cifra_gemini_key_v2';
 
